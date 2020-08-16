@@ -33,6 +33,7 @@ def CPA_block_general(matA:np.ndarray, block_size:int, hf_Bii:FunctionType, hf_a
     ret = broyden_solver(hf1, matC0.reshape(-1), tag_complex=tag_complex)
     return ret.reshape((num_block,block_size,block_size)) + Bii_mean
 
+# TODO check it's this necessary
 def _generate_hf_Bii_without_mean(hf_Bii, Bii_mean):
     def hf_Bii_without_mean(x):
         ret = hf_Bii(x)

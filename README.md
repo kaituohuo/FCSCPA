@@ -2,6 +2,8 @@
 
 keywords: coherent potential approximation (CPA), full couting statistics (FCS) theory, cumulant generating function (CGF), single site approximation (SSA), matrix inverse average, Broyden's method, self-consistent calculation, recursive Green's function (RGF) algorithm
 
+**STRANGE**: to pass the unittest, `quadpy.__version__` must be `0.12.11`, cannot be `0.14.0`/`0.15.2` (TODO)
+
 ## CPA
 
 Given a complex matrix A of size $N\times N$, and a random diagonal matrix B of the same size with some specified distribution (e.g. uniform, binary) (all diagonal elements of B are drawed independently from the distribution). The CPA algorithm is able to calculate the matrix inverse average $\langle \frac{1}{A-B} \rangle$.

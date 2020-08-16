@@ -6,5 +6,5 @@ setup(
     packages=find_packages('python'),
     package_dir={'':'python'},
     description='Full Counting Statistics using Coherent Potential Approximation',
-    install_requires=['scipy','quadpy'],
+    install_requires=['scipy','quadpy==0.12.11'],
 )
