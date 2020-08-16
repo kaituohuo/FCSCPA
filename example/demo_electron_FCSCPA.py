@@ -6,6 +6,7 @@ plt.ion()
 from RGF import inv_tridiagonal_matrix, build_device_Hamiltonian_with_ham0_ham1
 from FCSCPA import FCS_CPA_oneband, FCS_CPA_multiband
 from FCSCPA import generate_binary_hf_rand, generate_binary_hf_average
+from FCSCPA import generate_uniform_hf_rand, generate_uniform_hf_average
 from FCSCPA import generate_hf_Bii, Aii_to_matA
 
 
@@ -216,6 +217,92 @@ def demo_zigzag_lattice_multiband_binary():
     EDisorder = 0.2
     hf_rand = generate_binary_hf_rand(-EDisorder, 0.5, EDisorder)
     hf_average = generate_binary_hf_average(-EDisorder, 0.5, EDisorder)
+    hf_Bii = generate_hf_Bii(np.array([[0,1],[1,0]]))
+    energy = np.linspace(-4, 4, 50)
+    energy_epsj = 1e-7j
+
+    # calculation
+    assert NAPL%4==0
+    tmp0 = EFNN*(np.diag(np.ones(NAPL-1),1) + np.diag(np.ones(NAPL-1),-1)) + EOnsite_left*np.eye(NAPL)
+    ham0 = np.kron(tmp0, np.eye(2))
+    tmp1 = EFNN * np.kron(np.eye(NAPL//4+1), np.array([[0,0,0,0],[1,0,0,0],[0,0,0,1],[0,0,0,0]]))
+    ham1 = np.kron(tmp1[:NAPL, :NAPL], np.eye(2))
+    HInfo = build_device_Hamiltonian_with_ham0_ham1(ham0, ham1, num_layer)
+
+    tmp0 = [quick_transmission_moment_BF(x+energy_epsj, HInfo, num_moment, num_BF_sample, hf_rand, hf_Bii) for x in tqdm(energy)]
+    T_moment_BF = np.stack(tmp0, axis=1)
+
+    tmp0 = [quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average, hf_Bii) for x in tqdm(energy)]
+    T_moment_FCSCPA = np.stack(tmp0, axis=1)
+
+    ## figure
+    # assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4 #fail
+    tableau_colorblind = [x['color'] for x in plt.style.library['tableau-colorblind10']['axes.prop_cycle']]
+    fig,ax = plt.subplots()
+    for x,y,z in zip(range(num_moment), T_moment_FCSCPA.real, tableau_colorblind):
+        ax.plot(energy, y, color=z, label='$tr(T^{}$)'.format(x+1))
+    for x,y,z in zip(range(num_moment), T_moment_BF.real.mean(axis=2), tableau_colorblind):
+        ax.plot(energy, y, 'x', color=z, markersize=2)
+    ax.legend()
+
+
+def demo_zigzag_lattice_oneband_uniform():
+    ## parameter
+    num_layer = 2
+    NAPL = 4 #Number of Atoms Per Layer
+    NBPA = 2 #Number of Bands Per Atom
+    num_BF_sample = 1000
+    num_moment = 4
+
+    EFNN = -1 #Energy of First Nearest Neighbor
+    EOnsite_central = 0
+    EOnsite_left = 0
+    EOnsite_right = 0
+    EDisorder = 0.2
+    hf_rand = generate_uniform_hf_rand(-EDisorder, EDisorder)
+    hf_average = generate_uniform_hf_average(-EDisorder, EDisorder)
+    energy = np.linspace(-4, 4, 50)
+    energy_epsj = 1e-7j
+
+    # calculation
+    assert NAPL%4==0
+    ham0 = EFNN*(np.diag(np.ones(NAPL-1),1) + np.diag(np.ones(NAPL-1),-1)) + EOnsite_left*np.eye(NAPL)
+    ham1 = EFNN * np.kron(np.eye(NAPL//4+1), np.array([[0,0,0,0],[1,0,0,0],[0,0,0,1],[0,0,0,0]]))[:NAPL, :NAPL]
+    HInfo = build_device_Hamiltonian_with_ham0_ham1(ham0, ham1, num_layer)
+
+    tmp0 = [quick_transmission_moment_BF(x+energy_epsj, HInfo, num_moment, num_BF_sample, hf_rand) for x in tqdm(energy)]
+    T_moment_BF = np.stack(tmp0, axis=1)
+
+    tmp0 = [quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average) for x in tqdm(energy)]
+    T_moment_FCSCPA = np.stack(tmp0, axis=1)
+
+    ## figure
+    # assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4 #fail
+    tableau_colorblind = [x['color'] for x in plt.style.library['tableau-colorblind10']['axes.prop_cycle']]
+    fig,ax = plt.subplots()
+    for x,y,z in zip(range(num_moment), T_moment_FCSCPA.real, tableau_colorblind):
+        ax.plot(energy, y, color=z, label='$tr(T^{}$)'.format(x+1))
+    for x,y,z in zip(range(num_moment), T_moment_BF.real.mean(axis=2), tableau_colorblind):
+        ax.plot(energy, y, 'x', color=z, markersize=2)
+    ax.legend()
+
+
+def demo_zigzag_lattice_multiband_uniform():
+    # TODO fail, hf_average(multiband) cannot solve
+    ## parameter
+    num_layer = 2
+    NAPL = 4 #Number of Atoms Per Layer
+    NBPA = 2 #Number of Bands Per Atom
+    num_BF_sample = 100
+    num_moment = 4
+
+    EFNN = -1 #Energy of First Nearest Neighbor
+    EOnsite_central = 0
+    EOnsite_left = 0
+    EOnsite_right = 0
+    EDisorder = 0.2
+    hf_rand = generate_uniform_hf_rand(-EDisorder, EDisorder)
+    hf_average = generate_uniform_hf_average(-EDisorder, EDisorder)
     hf_Bii = generate_hf_Bii(np.array([[0,1],[1,0]]))
     energy = np.linspace(-4, 4, 50)
     energy_epsj = 1e-7j
