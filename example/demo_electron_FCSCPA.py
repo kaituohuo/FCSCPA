@@ -288,7 +288,6 @@ def demo_zigzag_lattice_oneband_uniform():
 
 
 def demo_zigzag_lattice_multiband_uniform():
-    # TODO fail, hf_average(multiband) cannot solve
     ## parameter
     num_layer = 2
     NAPL = 4 #Number of Atoms Per Layer

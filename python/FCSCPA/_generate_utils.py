@@ -20,8 +20,7 @@ def generate_uniform_hf_rand(x1:float, x2:float)->FunctionType:
 def generate_uniform_hf_average(x1:float, x2:float)->FunctionType:
     assert x2 > x1
     def hf_average(hf1):
-        # return quadpy.c1.integrate_adaptive(hf1, [x1,x2], 1e-5)[0]/(x2-x1) #TODO
-        return quadpy.line_segment.integrate_adaptive(hf1, [x1,x2], 1e-5)[0]/(x2-x1)
+        return quadpy.c1.integrate_adaptive(hf1, [x1,x2], 1e-5)[0]/(x2-x1) #TODO
     return hf_average
 
 def generate_binary_hf_rand(x1:float, c1:float, x2:float)->FunctionType:
