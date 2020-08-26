@@ -51,7 +51,7 @@ def quick_transmission_moment_BF(energy_i_epsj, HInfo, num_order, num_sample, hf
     return ret
 
 
-def quick_transmission_moment_FCSCPA(energy_i_epsj, HInfo, num_order, hf_average, hf_Bii=None):
+def quick_transmission_moment_FCSCPA(energy_i_epsj, HInfo, num_order, hf_average, hf_Bii=None, matC0=None):
     NBPL = HInfo['ham_left_intra'].shape[0]
     num_layer = HInfo['ham_central'].shape[0] // NBPL
     energyEye1 = energy_i_epsj*np.eye(HInfo['ham_left_intra'].shape[0])
@@ -70,14 +70,16 @@ def quick_transmission_moment_FCSCPA(energy_i_epsj, HInfo, num_order, hf_average
     inv_Green_part[:NBPL,:NBPL] -= self_energy_left
     inv_Green_part[(-NBPL):,(-NBPL):] -= self_energy_right
     if hf_Bii is None:
-        N_Gamma_trace = FCS_CPA_oneband(num_order, inv_Green_part, -line_width_right, line_width_left, hf_average)
+        N_Gamma_trace,matC0 = FCS_CPA_oneband(num_order, inv_Green_part,
+                -line_width_right, line_width_left, hf_average, matC0=matC0)
     else:
-        N_Gamma_trace = FCS_CPA_multiband(num_order, inv_Green_part, -line_width_right, line_width_left, hf_Bii, hf_average)
+        N_Gamma_trace,matC0 = FCS_CPA_multiband(num_order, inv_Green_part,
+                -line_width_right, line_width_left, hf_Bii, hf_average, matC0=matC0)
     ret = np.array([(1-2*(ind1%2))*x/2 for ind1,x in enumerate(N_Gamma_trace)])
     tmp0 = np.abs(ret.imag).max()
     if tmp0>1e-5:
         print('[warning] large image part "{}j" for energy={}'.format(tmp0, energy_i_epsj))
-    return ret
+    return ret,matC0
 
 # TODO multiprocessing
 def demo_square_lattice_oneband_binary():
@@ -105,8 +107,12 @@ def demo_square_lattice_oneband_binary():
     tmp0 = [quick_transmission_moment_BF(x+energy_epsj, HInfo, num_moment, num_BF_sample, hf_rand) for x in tqdm(energy)]
     T_moment_BF = np.stack(tmp0, axis=1)
 
-    tmp0 = [quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average) for x in tqdm(energy)]
-    T_moment_FCSCPA = np.stack(tmp0, axis=1)
+    matC0 = None
+    T_moment_FCSCPA = []
+    for x in tqdm(energy):
+        tmp0,matC0 = quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average, matC0=matC0)
+        T_moment_FCSCPA.append(tmp0)
+    T_moment_FCSCPA = np.stack(T_moment_FCSCPA, axis=1)
 
     ## figure
     assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4
@@ -147,8 +153,12 @@ def demo_square_lattice_multiband_binary():
     tmp0 = [quick_transmission_moment_BF(x+energy_epsj, HInfo, num_moment, num_BF_sample, hf_rand, hf_Bii) for x in tqdm(energy)]
     T_moment_BF = np.stack(tmp0, axis=1)
 
-    tmp0 = [quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average, hf_Bii) for x in tqdm(energy)]
-    T_moment_FCSCPA = np.stack(tmp0, axis=1)
+    matC0 = None
+    T_moment_FCSCPA = []
+    for x in tqdm(energy):
+        tmp0,matC0 = quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average, hf_Bii=hf_Bii, matC0=matC0)
+        T_moment_FCSCPA.append(tmp0)
+    T_moment_FCSCPA = np.stack(T_moment_FCSCPA, axis=1)
 
     ## figure
     assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4 #fail sometimes
@@ -188,8 +198,12 @@ def demo_zigzag_lattice_oneband_binary():
     tmp0 = [quick_transmission_moment_BF(x+energy_epsj, HInfo, num_moment, num_BF_sample, hf_rand) for x in tqdm(energy)]
     T_moment_BF = np.stack(tmp0, axis=1)
 
-    tmp0 = [quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average) for x in tqdm(energy)]
-    T_moment_FCSCPA = np.stack(tmp0, axis=1)
+    matC0 = None
+    T_moment_FCSCPA = []
+    for x in tqdm(energy):
+        tmp0,matC0 = quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average, matC0=matC0)
+        T_moment_FCSCPA.append(tmp0)
+    T_moment_FCSCPA = np.stack(T_moment_FCSCPA, axis=1)
 
     ## figure
     assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4
@@ -232,8 +246,12 @@ def demo_zigzag_lattice_multiband_binary():
     tmp0 = [quick_transmission_moment_BF(x+energy_epsj, HInfo, num_moment, num_BF_sample, hf_rand, hf_Bii) for x in tqdm(energy)]
     T_moment_BF = np.stack(tmp0, axis=1)
 
-    tmp0 = [quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average, hf_Bii) for x in tqdm(energy)]
-    T_moment_FCSCPA = np.stack(tmp0, axis=1)
+    matC0 = None
+    T_moment_FCSCPA = []
+    for x in tqdm(energy):
+        tmp0,matC0 = quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average, hf_Bii=hf_Bii, matC0=matC0)
+        T_moment_FCSCPA.append(tmp0)
+    T_moment_FCSCPA = np.stack(T_moment_FCSCPA, axis=1)
 
     ## figure
     # assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4 #fail
@@ -273,8 +291,12 @@ def demo_zigzag_lattice_oneband_uniform():
     tmp0 = [quick_transmission_moment_BF(x+energy_epsj, HInfo, num_moment, num_BF_sample, hf_rand) for x in tqdm(energy)]
     T_moment_BF = np.stack(tmp0, axis=1)
 
-    tmp0 = [quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average) for x in tqdm(energy)]
-    T_moment_FCSCPA = np.stack(tmp0, axis=1)
+    matC0 = None
+    T_moment_FCSCPA = []
+    for x in tqdm(energy):
+        tmp0,matC0 = quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average, matC0=matC0)
+        T_moment_FCSCPA.append(tmp0)
+    T_moment_FCSCPA = np.stack(T_moment_FCSCPA, axis=1)
 
     ## figure
     # assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4 #fail
@@ -317,8 +339,12 @@ def demo_zigzag_lattice_multiband_uniform():
     tmp0 = [quick_transmission_moment_BF(x+energy_epsj, HInfo, num_moment, num_BF_sample, hf_rand, hf_Bii) for x in tqdm(energy)]
     T_moment_BF = np.stack(tmp0, axis=1)
 
-    tmp0 = [quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average, hf_Bii) for x in tqdm(energy)]
-    T_moment_FCSCPA = np.stack(tmp0, axis=1)
+    matC0 = None
+    T_moment_FCSCPA = []
+    for x in tqdm(energy):
+        tmp0,matC0 = quick_transmission_moment_FCSCPA(x+energy_epsj, HInfo, num_moment, hf_average, hf_Bii=hf_Bii, matC0=matC0)
+        T_moment_FCSCPA.append(tmp0)
+    T_moment_FCSCPA = np.stack(T_moment_FCSCPA, axis=1)
 
     ## figure
     # assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4 #fail

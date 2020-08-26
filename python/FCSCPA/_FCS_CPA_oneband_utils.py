@@ -6,7 +6,8 @@ from FCSCPA._CPA_oneband import CPA_general
 hfH = lambda x: np.conjugate(x.T)
 
 def FCS_CPA_oneband(num_cumulant:int, inv_Green_part:np.ndarray,
-        Gamma12:np.ndarray, Gamma21:np.ndarray, hf_average:FunctionType)->np.ndarray:
+        Gamma12:np.ndarray, Gamma21:np.ndarray,
+        hf_average:FunctionType, matC0:np.ndarray=None)->np.ndarray:
     '''see FCS_CPA
     abbreviation:
         N0(num_cumulant)
@@ -24,7 +25,8 @@ def FCS_CPA_oneband(num_cumulant:int, inv_Green_part:np.ndarray,
     Nii_list = [[None,None] for _ in range(2*num_cumulant)]
     Delta_list = [[None,None] for _ in range(2*num_cumulant)]
 
-    Delta_list[0][0] = CPA_general(inv_Green_part, hf_average)
+    matC0 = CPA_general(inv_Green_part, hf_average, matC0)
+    Delta_list[0][0] = matC0
     Delta_list[0][1] = hfH(Delta_list[0][0])
     N_list[0][0] = np.linalg.inv(inv_Green_part - np.diag(Delta_list[0][0]))
     N_list[0][1] = hfH(N_list[0][0])
@@ -68,7 +70,8 @@ def FCS_CPA_oneband(num_cumulant:int, inv_Green_part:np.ndarray,
         tmp2 = [x[(y+1)%2] for x,y in zip(N_list[(ind1-1)::-1],range(1,ind1+1))]
         N_list[ind1][1] = N_list[0][1] @ (sum(x[:,np.newaxis]*y for x,y in zip(tmp1,tmp2)) - Gamma21 @ N_list[ind1-1][0])
         Nii_list[ind1][1] = np.diag(N_list[ind1][1])
-    return np.array([(x*Gamma21.T).sum() + (y*Gamma12.T).sum() for x,y in N_list[1::2]])
+    N_Gamma_trace = np.array([(x*Gamma21.T).sum() + (y*Gamma12.T).sum() for x,y in N_list[1::2]])
+    return N_Gamma_trace, matC0
 
 
 def get_BKBK_BKK(Delta0_11, Delta0_22, N0ii_11, N0ii_22, hf_average):

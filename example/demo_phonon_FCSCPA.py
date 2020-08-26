@@ -57,7 +57,7 @@ def quick_phonon_transmission_moment_BF(angular_frequency_i, mass_left_lead,
 
 
 def quick_phonon_transmission_moment_FCSCPA(angular_frequency_i, mass_left_lead,
-            mass_right_lead, HInfo, num_order, hf_average, hf_Bii, energy_epsj):
+            mass_right_lead, HInfo, num_order, hf_average, hf_Bii, energy_epsj, matC0=None):
     NBPL = HInfo['ham_left_intra'].shape[0]
     NBPA = hf_Bii(0).shape[0]
     NAPL = NBPL // NBPA
@@ -79,17 +79,18 @@ def quick_phonon_transmission_moment_FCSCPA(angular_frequency_i, mass_left_lead,
     inv_Green_part[:NBPL,:NBPL] -= self_energy_left
     inv_Green_part[(-NBPL):,(-NBPL):] -= self_energy_right
 
-    N_Gamma_trace = FCS_CPA_multiband(num_order, inv_Green_part, line_width_right, line_width_left, hf_Bii, hf_average)
+    N_Gamma_trace,matC0 = FCS_CPA_multiband(num_order, inv_Green_part,
+            line_width_right, line_width_left, hf_Bii, hf_average, matC0=matC0)
     ret = -1/2 * N_Gamma_trace
     if np.abs(ret.imag).max()>1e-5:
         print('[warning] large image part "{}j" for energy={}'.format(np.abs(ret.imag).max(), angular_frequency_i))
-    return ret
+    return ret, matC0
 
 
 def demo_square_lattice_oneband_binary():
     # parameter
-    num_layer = 4
-    NAPL = 1 #Number of Atom Per Layer
+    num_layer = 20
+    NAPL = 20 #Number of Atom Per Layer
     num_sample = 1000
     num_moment = 4
     wave_number = np.linspace(10, 1700, 100) #cm-1
@@ -114,12 +115,15 @@ def demo_square_lattice_oneband_binary():
                 mass_right_lead, HInfo, num_moment, num_sample, hf_rand, hf_Bii, energy_epsj))
     T_moment_BF = np.stack(T_moment_BF, axis=1)
 
+    matC0 = None
     T_moment_FCSCPA = []
     for x in tqdm(angular_frequency):
         hf_Bii = generate_hf_Bii(-np.ones((1,1))*x**2)
-        T_moment_FCSCPA.append(quick_phonon_transmission_moment_FCSCPA(x,
-                mass_left_lead, mass_right_lead, HInfo, num_moment, hf_average, hf_Bii, energy_epsj))
+        tmp0,matC0 = quick_phonon_transmission_moment_FCSCPA(x, mass_left_lead,
+                mass_right_lead, HInfo, num_moment, hf_average, hf_Bii, energy_epsj, matC0=matC0)
+        T_moment_FCSCPA.append(tmp0)
     T_moment_FCSCPA = np.stack(T_moment_FCSCPA, axis=1)
+    # use previous matC0 doesn't make any help
 
     # assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4
     tableau_colorblind = [x['color'] for x in plt.style.library['tableau-colorblind10']['axes.prop_cycle']]
@@ -163,11 +167,13 @@ def demo_square_lattice_multiband_binary():
                 mass_right_lead, HInfo, num_moment, num_sample, hf_rand, hf_Bii, energy_epsj))
     T_moment_BF = np.stack(T_moment_BF, axis=1)
 
+    matC0 = None
     T_moment_FCSCPA = []
     for x in tqdm(angular_frequency):
         hf_Bii = generate_hf_Bii(-np.ones((1,1))*x**2)
-        T_moment_FCSCPA.append(quick_phonon_transmission_moment_FCSCPA(x,
-                mass_left_lead, mass_right_lead, HInfo, num_moment, hf_average, hf_Bii, energy_epsj))
+        tmp0, matC0 = quick_phonon_transmission_moment_FCSCPA(x,
+                mass_left_lead, mass_right_lead, HInfo, num_moment, hf_average, hf_Bii, energy_epsj, matC0=matC0)
+        T_moment_FCSCPA.append(tmp0)
     T_moment_FCSCPA = np.stack(T_moment_FCSCPA, axis=1)
 
     # assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4
@@ -214,11 +220,13 @@ def demo_zigzag_lattice_multiband_binary():
                 mass_right_lead, HInfo, num_moment, num_sample, hf_rand, hf_Bii, energy_epsj))
     T_moment_BF = np.stack(T_moment_BF, axis=1)
 
+    matC0 = None
     T_moment_FCSCPA = []
     for x in tqdm(angular_frequency):
         hf_Bii = generate_hf_Bii(-np.ones((1,1))*x**2)
-        T_moment_FCSCPA.append(quick_phonon_transmission_moment_FCSCPA(x,
-                mass_left_lead, mass_right_lead, HInfo, num_moment, hf_average, hf_Bii, energy_epsj))
+        tmp0,matC0 = quick_phonon_transmission_moment_FCSCPA(x,
+                mass_left_lead, mass_right_lead, HInfo, num_moment, hf_average, hf_Bii, energy_epsj, matC0=matC0)
+        T_moment_FCSCPA.append(tmp0)
     T_moment_FCSCPA = np.stack(T_moment_FCSCPA, axis=1)
 
     # assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4
@@ -264,11 +272,13 @@ def demo_square_lattice_multiband_uniform():
                 mass_right_lead, HInfo, num_moment, num_sample, hf_rand, hf_Bii, energy_epsj))
     T_moment_BF = np.stack(T_moment_BF, axis=1)
 
+    matC0 = None
     T_moment_FCSCPA = []
     for x in tqdm(angular_frequency):
         hf_Bii = generate_hf_Bii(-np.ones((1,1))*x**2)
-        T_moment_FCSCPA.append(quick_phonon_transmission_moment_FCSCPA(x,
-                mass_left_lead, mass_right_lead, HInfo, num_moment, hf_average, hf_Bii, energy_epsj))
+        tmp0,matC0 = quick_phonon_transmission_moment_FCSCPA(x,
+                mass_left_lead, mass_right_lead, HInfo, num_moment, hf_average, hf_Bii, energy_epsj, matC0=matC0)
+        T_moment_FCSCPA.append(tmp0)
     T_moment_FCSCPA = np.stack(T_moment_FCSCPA, axis=1)
 
     # assert np.abs(T_moment_FCSCPA.imag).max() < 1e-4

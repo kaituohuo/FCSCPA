@@ -27,7 +27,8 @@ def hf_dot_matmul(*args):
 #     return zct1
 
 def FCS_CPA_multiband(num_cumulant:int, inv_Green_part:np.ndarray,
-        Gamma12:np.ndarray, Gamma21:np.ndarray, hf_Bii:FunctionType, hf_average:FunctionType)->np.ndarray:
+        Gamma12:np.ndarray, Gamma21:np.ndarray, hf_Bii:FunctionType,
+        hf_average:FunctionType, matC0:np.ndarray=None)->np.ndarray:
     '''documentation see FCS_CPA'''
     NBPA = hf_Bii(0).shape[0]
     assert inv_Green_part.shape[0]%NBPA==0
@@ -36,7 +37,8 @@ def FCS_CPA_multiband(num_cumulant:int, inv_Green_part:np.ndarray,
     Nii_list = [[None,None] for _ in range(2*num_cumulant)]
     Delta_list = [[None,None] for _ in range(2*num_cumulant)]
 
-    Delta_list[0][0] = CPA_block_general(inv_Green_part, NBPA, hf_Bii, hf_average)
+    matC0 = CPA_block_general(inv_Green_part, NBPA, hf_Bii, hf_average, matC0)
+    Delta_list[0][0] = matC0
     Delta_list[0][1] = np.conjugate((Delta_list[0][0].transpose(0,2,1)))
     # Delta_list[0][1] = CPA_block_general(inv_Green_part.T.conj(), NBPA, hf_Bii, hf_average)
     N_list[0][0] = np.linalg.inv(inv_Green_part - scipy.linalg.block_diag(*Delta_list[0][0]))
@@ -88,7 +90,8 @@ def FCS_CPA_multiband(num_cumulant:int, inv_Green_part:np.ndarray,
         N_list[ind1][1] = N_list[0][1] @ (tmp3 - Gamma21 @ N_list[ind1-1][0])
         Nii_list[ind1][0] = N_list[ind1][0].reshape((num_atom,NBPA,num_atom,NBPA))[np.arange(num_atom),:,np.arange(num_atom)]
         Nii_list[ind1][1] = N_list[ind1][1].reshape((num_atom,NBPA,num_atom,NBPA))[np.arange(num_atom),:,np.arange(num_atom)]
-    return np.array([(x*Gamma21.T).sum() + (y*Gamma12.T).sum() for x,y in N_list[1::2]])
+    N_Gamma_trace = np.array([(x*Gamma21.T).sum() + (y*Gamma12.T).sum() for x,y in N_list[1::2]])
+    return N_Gamma_trace, matC0
 
 def get_BKBK_BKK(Delta0_11, Delta0_22, N0ii_11, N0ii_22, hf_Bii, hf_average):
     hf1 = lambda x: hf_BKBK_BKK(hf_Bii(x), Delta0_11, Delta0_22, N0ii_11, N0ii_22)
