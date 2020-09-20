@@ -21,7 +21,7 @@ def CPA_block_general(matA:np.ndarray, block_size:int, hf_Bii:FunctionType, hf_a
     assert matA.shape[0] % block_size==0
     num_block = matA.shape[0]//block_size
     if matC0 is None:
-        matC0 = np.random.rand(num_block, block_size, block_size)
+        matC0 = (np.random.rand(num_block, block_size, block_size)-0.5)/10
     else:
         assert matC0.shape==(num_block, block_size, block_size)
     Bii_mean = hf_average(lambda x: hf_Bii(x))

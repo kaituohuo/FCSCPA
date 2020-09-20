@@ -14,7 +14,7 @@ def CPA_general(matA:np.ndarray, hf_average:FunctionType, matC0=None, tag_comple
     (ret)(np,complex,(N0,))
     '''
     if matC0 is None:
-        matC0 = np.random.rand(matA.shape[0])
+        matC0 = (np.random.rand(matA.shape[0])-0.5)/10
     Bii_mean = hf_average(lambda x: x)
     matA = matA - Bii_mean*np.eye(matA.shape[0])
     hf1 = lambda x: _CPA_hf_broyden(x, matA, Bii_mean, hf_average)
