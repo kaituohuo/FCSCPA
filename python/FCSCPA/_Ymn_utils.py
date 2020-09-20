@@ -51,7 +51,7 @@ def Ymn_Leibniz_matAB(m:int, n:int)->(np.ndarray, np.ndarray):
 
 
 
-def Ymn_Leibniz(fL:float, fR:float, matA:np.ndarray, matB:np.ndarray, tag_type:str='electron')->float:
+def Ymn_Leibniz(fL, fR, matA:np.ndarray, matB:np.ndarray, tag_type:str='electron')->float:
     '''
     see demo_Ymn_Leibniz for basic usage
     generate matA and matB using Ymn_Leibniz_matAB
@@ -64,7 +64,13 @@ def Ymn_Leibniz(fL:float, fR:float, matA:np.ndarray, matB:np.ndarray, tag_type:s
     else:
         odd_taylor = fL - fR
         even_taylor = fL + fR + 2*fL*fR
-    ret = np.sum(matA * (odd_taylor**matB[:,0] * even_taylor**matB[:,1])).item()
+    odd_taylor = np.asarray(odd_taylor)
+    even_taylor = np.asarray(even_taylor)
+    if odd_taylor.ndim==0:
+        ret = np.sum(matA * (odd_taylor**matB[:,0] * even_taylor**matB[:,1])).item()
+    else:
+        ret = np.sum(matA * (odd_taylor[:,np.newaxis]**matB[:,0] * even_taylor[:,np.newaxis]**matB[:,1]), axis=-1)
+    # ret = np.sum(matA * (odd_taylor**matB[:,0] * even_taylor**matB[:,1])).item()
     return ret
 
 
